@@ -1,0 +1,157 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              06/15/2018 16:09:21 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.obj
+COMPILER INVOKED BY: D:\keil4\C51\BIN\C51.EXE c\main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\main.lst) TAB
+                    -S(2) OBJECT(main.obj)
+
+line level    source
+
+   1          #include "H/Function_Init.H"
+   2          #include "string.h"
+   3          bit flag1 = 0;   //ÖÐ¶Ï±êÖ¾Î»
+   4          
+   5          /*************************************************************
+   6          ËµÃ÷£º
+   7          1¡¢Options for Target¡®Target1¡¯£ºBL51 Locate->Code Range:0x100£¬ÉÕÂ¼Ñ¡ÏîÇëÑ¡ÔñDISRST£¬¸´Î»½Å×÷ÎªÆÕÍ¨IOÊ¹Ó
+             -Ã£»
+   8          2¡¢¸Ä±äTESTµÄ¶¨Òå£¬¿ÉÒÔ·Ö±ð²âÊÔ¶ÔÓ¦µÄ¹¦ÄÜ£»
+   9          ***************************************************************/
+  10          unsigned int i;
+  11          unsigned char res;
+  12          static unsigned char rev_num;
+  13          unsigned int temp;
+  14          PROTOCOL_BUF_R rev_para;
+  15          #if 1
+  16          unsigned char Rev_Data(void)
+  17          {
+  18   1        return SSDAT;
+  19   1      }
+  20          unsigned char Serial_Get_Status(void)
+  21          {
+  22   1        if(rev_num & 0x80)
+  23   1        {
+  24   2          rev_num = 0;
+  25   2          return 1;
+  26   2        }
+  27   1        else
+  28   1        {
+  29   2          return 0;
+  30   2        }
+  31   1      }
+  32          
+  33          void Serial_Rev_IQH(void)
+  34          {
+  35   1        res = Rev_Data();
+  36   1        
+  37   1        if((rev_num & 0x80) == 0)
+  38   1        {
+  39   2          if(rev_num & 0x40)
+  40   2          {
+  41   3            if(res == 0x0a)
+  42   3            {
+  43   4              rev_num = 0x80;
+  44   4            }
+  45   3            else
+  46   3            {
+  47   4              rev_num = 0;
+  48   4            }
+  49   3          }
+  50   2          else
+  51   2          {
+  52   3            if(res == 0x0d)
+  53   3            {
+C51 COMPILER V9.59.0.0   MAIN                                                              06/15/2018 16:09:21 PAGE 2   
+
+  54   4              rev_num |= 0x40;
+  55   4              
+  56   4            }
+  57   3            else
+  58   3            {
+  59   4              rev_para.Buf[rev_num] = res;
+  60   4              rev_num++;
+  61   4              if(rev_para.Buf[0] != 0x01)
+  62   4              {
+  63   5                rev_num = 0;
+  64   5              }
+  65   4              if(rev_num > BUF_SIZE)
+  66   4              {
+  67   5                rev_num = 0;
+  68   5                
+  69   5              }
+  70   4            }
+  71   3          }
+  72   2        }
+  73   1        
+  74   1      }
+  75          #endif
+  76          
+  77          void main(void)
+  78          {
+  79   1         IO_Init();
+  80   1         Uart1_Init(12,9600);
+  81   1         while(1)
+  82   1         {
+  83   2           //for(i = 0;i < 30000;i++);
+  84   2           if(Serial_Get_Status())
+  85   2           {
+  86   3              temp = (unsigned int)Get_32bit(rev_para.Data_Format.DATA1,rev_para.Data_Format.DATA2);
+  87   3              memset(&rev_para,0,sizeof(rev_para));
+  88   3              switch(temp)
+  89   3              {
+  90   4                case 0x0001:
+  91   4                          P14 = 1;
+  92   4                          break;
+  93   4                case 0x0002:
+  94   4                          P14 = 0;
+  95   4                          break;
+  96   4                default:
+  97   4                          break;
+  98   4              }
+  99   3      
+ 100   3           }
+ 101   2          
+ 102   2          
+ 103   2         }
+ 104   1      }
+ 105          
+ 106          
+ 107          /*****************************************************
+ 108          *º¯ÊýÃû³Æ£ºvoid TWI_Int() interrupt 7
+ 109          *º¯Êý¹¦ÄÜ£ºSSIÖÐ¶Ïº¯Êý
+ 110          *Èë¿Ú²ÎÊý£ºvoid
+ 111          *³ö¿Ú²ÎÊý£ºvoid
+ 112          *****************************************************/
+ 113          void Uart1_Int() interrupt 7   //Uart1ÖÐ¶Ïº¯Êý
+ 114          {
+ 115   1        
+C51 COMPILER V9.59.0.0   MAIN                                                              06/15/2018 16:09:21 PAGE 3   
+
+ 116   1        Serial_Rev_IQH();
+ 117   1        if(SSCON0&0x02)    //½ÓÊÕ±êÖ¾Î»ÅÐ¶Ï
+ 118   1        {
+ 119   2          SSCON0&=0xFD;
+ 120   2          
+ 121   2        }
+ 122   1        if((SSCON0&0x01))  //·¢ËÍ±êÖ¾Î»ÅÐ¶Ï
+ 123   1        {
+ 124   2          SSCON0&=0xFE;
+ 125   2          
+ 126   2        }
+ 127   1        //flag1 = 1;
+ 128   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    198    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     13    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,6 @@
+"STARTUP.obj",
+"IO_Init.obj",
+"main.obj",
+"SSI_Init.obj" 
+TO "FullResources" 
+RAMSIZE(256) 

@@ -1,0 +1,95 @@
+C51 COMPILER V9.59.0.0   MAIN                                                              06/22/2018 11:58:50 PAGE 1   
+
+
+C51 COMPILER V9.59.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.obj
+COMPILER INVOKED BY: D:\keil4\C51\BIN\C51.EXE c\main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\main.lst) TAB
+                    -S(2) OBJECT(main.obj)
+
+line level    source
+
+   1          #include "H/Function_Init.H"
+   2          #include "string.h"
+   3          
+   4          bit flag1 = 0;   //中断标志位
+   5          unsigned int i;
+   6          
+   7          void Send_Byte(unsigned char ssdat)
+   8          {
+   9   1         SSDAT = ssdat;
+  10   1         while(!flag1);
+  11   1         flag1 = 0;
+  12   1      }
+  13          
+  14          unsigned int Protocol_Send(PROTOCOL_BUF_t *p)
+  15          {
+  16   1        char cnt;
+  17   1        for(cnt = 0;cnt < BUF_SIZE;cnt++)
+  18   1        {
+  19   2           Send_Byte(p->Buf[cnt]);
+  20   2        }
+  21   1        return 1;
+  22   1      }
+  23          
+  24          unsigned int Send_Data(ADDR_DATA addr,ID_DATA id,unsigned int tx_data)
+  25          {
+  26   1        PROTOCOL_BUF_t buf;
+  27   1        memset(&buf,0,sizeof(buf));
+  28   1        buf.Data_Format.Add = addr;
+  29   1        buf.Data_Format.MessageID = id;
+  30   1        buf.Data_Format.Data1 = get_hight(tx_data);
+  31   1        buf.Data_Format.Data2 = get_low(tx_data);
+  32   1        buf.Data_Format.Checksum = (unsigned char)((buf.Data_Format.Add)+(buf.Data_Format.MessageID)+(buf.Data_Fo
+             -rmat.Data1)+(buf.Data_Format.Data2));
+  33   1        buf.Data_Format.Stop1 = get_hight(STOP_DATA);
+  34   1        buf.Data_Format.Stop2 = get_low(STOP_DATA);
+  35   1        return Protocol_Send(&buf); 
+  36   1      }
+  37          
+  38          void main(void)
+  39          {
+  40   1           IO_Init();
+  41   1           Uart1_Init(12,9600);
+  42   1           while(1)
+  43   1           {
+  44   2             for(i = 0;i < 60000;i++);
+  45   2             Send_Data(0x01,0x02,0x01);
+  46   2           }
+  47   1      }
+  48          
+  49          
+  50          /*****************************************************
+  51          *函数名称：void TWI_Int() interrupt 7
+  52          *函数功能：SSI中断函数
+  53          *入口参数：void
+C51 COMPILER V9.59.0.0   MAIN                                                              06/22/2018 11:58:50 PAGE 2   
+
+  54          *出口参数：void
+  55          *****************************************************/
+  56          void Uart1_Int() interrupt 7   //Uart1中断函数
+  57          {
+  58   1        if(SSCON0&0x02)    //接收标志位判断
+  59   1        {
+  60   2          SSCON0&=0xFD;
+  61   2        }
+  62   1        if((SSCON0&0x01))  //发送标志位判断
+  63   1        {
+  64   2          SSCON0&=0xFE;
+  65   2        }
+  66   1        flag1 = 1;
+  67   1      }
+  68          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    214    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =      2      14
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
